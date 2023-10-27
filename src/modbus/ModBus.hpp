@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <Arduino.h>
 #include <ModbusRTU.h>
 #include "../env.hpp"
