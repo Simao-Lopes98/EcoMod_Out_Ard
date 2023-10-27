@@ -26,7 +26,7 @@ namespace Network
         Serial.println("Starting AP");
         Serial.println("ESP_EcoModZHC");
 
-        WiFi.softAP("ESP_EcoModZHC", "123456789");
+        WiFi.softAP("ESP_EcoModZHC_OUT", "123456789");
 
         Serial.println("");
         Serial.println("Connected to WiFi");
