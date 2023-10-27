@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<title>EcoMod Update</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f2f2f2;
+			margin: 0;
+			padding: 0;
+		}
+
+		h1 {
+			text-align: center;
+			color: #333;
+		}
+
+		/* Center the form on the page */
+		.container {
+			max-width: 400px;
+			margin: 0 auto;
+			background-color: #fff;
+			padding: 20px;
+			border-radius: 5px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+		}
+
+		/* Style the form inputs and buttons */
+		input[type="text"],
+		input[type="password"],
+		input[type="file"],
+		button {
+			width: 100%;
+			padding: 10px;
+			margin-bottom: 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			box-sizing: border-box;
+			font-size: 16px;
+		}
+
+		button {
+			background-color: #0473aa;
+			color: white;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background-color: #03176c;
+		}
+
+		/* Progress bar */
+		#progress {
+			text-align: center;
+			margin-top: 10px;
+		}
+
+		/* Responsive layout for small screens */
+		@media screen and (max-width: 600px) {
+			.container {
+				width: 100%;
+				padding: 10px;
+			}
+		}
+	</style>
+	<script>
+		function submitCredentials() {
+			var ssid = document.getElementById("ssid").value;
+			var password = document.getElementById("password").value;
+
+			if (ssid === "" || password === "") {
+				alert("Please fill in both SSID and Password fields!");
+			} else {
+				// Create a JSON object with the SSID and password
+				var credentials = {
+					ssid: ssid,
+					password: password
+				};
+
+				var xhr = new XMLHttpRequest();
+				xhr.onreadystatechange = function () {
+					if (xhr.readyState == 4) {
+						if (xhr.status == 200) {
+							alert("Credentials submitted successfully!");
+						} else {
+							alert("Error submitting credentials: " + xhr.status + " " + xhr.statusText);
+						}
+					}
+				};
+
+				xhr.open("POST", "/update/credentials", true);
+				xhr.setRequestHeader("Content-Type", "application/json");
+				xhr.send(JSON.stringify(credentials));
+
+				// Optionally, you can clear the SSID and password fields after submission.
+				document.getElementById("ssid").value = "";
+				document.getElementById("password").value = "";
+			}
+		}
+		function startUpload() {
+			var otafile = document.getElementById("otafile").files;
+
+			if (otafile.length == 0) {
+				alert("No file selected!");
+			} else {
+				document.getElementById("otafile").disabled = true;
+				document.getElementById("upload").disabled = true;
+
+				var file = otafile[0];
+				var xhr = new XMLHttpRequest();
+				xhr.onreadystatechange = function () {
+					if (xhr.readyState == 4) {
+						if (xhr.status == 200) {
+							document.open();
+							document.write(xhr.responseText);
+							document.close();
+						} else if (xhr.status == 0) {
+							alert("Server closed the connection abruptly!");
+							location.reload()
+						} else {
+							alert(xhr.status + " Error!\n" + xhr.responseText);
+							location.reload()
+						}
+					}
+				};
+
+				xhr.upload.onprogress = function (e) {
+					var progress = document.getElementById("progress");
+					progress.textContent = "Progress: " + (e.loaded / e.total * 100).toFixed(0) + "%";
+				};
+				xhr.open("POST", "/update/firmware", true);
+				xhr.send(file);
+			}
+		}
+
+		function requestData() {
+
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function () {
+				if (xhr.readyState == 4) {
+					if (xhr.status == 200) {
+						var response = xhr.responseText;
+						alert("Parametros recebidos: " + response);
+					} else {
+						alert("Error requesting data: " + xhr.status + " " + xhr.statusText);
+					}
+				}
+			};
+
+			xhr.open("GET", "/update/parameters", true);
+			xhr.send();
+		}
+
+	</script>
+</head>
+
+<body>
+	<h1>EcoMod Updater</h1>
+	<div class="container">
+		<label for="ssid">SSID:</label>
+		<input type="text" id="ssid" name="ssid" placeholder="Enter SSID" />
+
+		<label for="password">Password:</label>
+		<input type="password" id="password" name="password" placeholder="Enter Password" />
+
+		<button id="submit" type="button" onclick="submitCredentials()">Submit SSID and Password</button>
+
+		<label for="otafile">Firmware update file:</label>
+		<input type="file" id="otafile" name="otafile" />
+
+		<button id="upload" type="button" onclick="startUpload()">Upload Firmware</button>
+
+		<button id="requestData" type="button" onclick="requestData()">Request Sensor Data</button>
+
+		<button id="restart_uC" type="button" onclick="requestSoftRestart()">Request restart</button>
+
+		<div id="progress"></div>
+	</div>
+</body>
+
+</html>
