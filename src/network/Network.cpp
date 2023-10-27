@@ -16,6 +16,7 @@ namespace Network
         while (WiFi.status() != WL_CONNECTED)
         {
             Serial.println("Network: Trying to connect");
+            vTaskDelay(1000/portTICK_PERIOD_MS);
         }
         Serial.println("");
         Serial.println("WiFi connected");
@@ -39,7 +40,7 @@ namespace Network
         WiFi.disconnect(true,false);
         while (WiFi.status() == WL_CONNECTED)
         {
-            delay(1000);
+            vTaskDelay(1000/portTICK_PERIOD_MS);
             Serial.println("Disconnecting from current Wi-Fi network...");
         }
 

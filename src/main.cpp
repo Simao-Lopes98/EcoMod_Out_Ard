@@ -8,6 +8,7 @@
 #include "ota/OTA.hpp"
 #include "i2c/I2C.hpp"
 #include "modbus/ModBus.hpp"
+#include "drain/Drain.hpp"
 
 
 TaskHandle_t TaskMQTT;
@@ -16,6 +17,7 @@ TaskHandle_t TaskHTTPSever;
 TaskHandle_t TaskOTA;
 TaskHandle_t TaskI2C;
 TaskHandle_t TaskModBus;
+TaskHandle_t TaskDrain;
 
 void setup()
 {
@@ -28,7 +30,7 @@ void setup()
   #endif
 
   #if ENV_TASK_MQTT
-  xTaskCreate(MQTT::taskMQTT, "TaskMQTT", 5 * 1024, NULL, 1, &TaskMQTT);
+  xTaskCreate(MQTT::taskMQTT, "TaskMQTT", 5 * 1024, NULL, 2, &TaskMQTT);
   #endif
 
   #if ENV_TASK_HTTPSERVER
@@ -45,6 +47,10 @@ void setup()
 
   #if ENV_TASK_MODBUS
   xTaskCreate(ModBus::taskModbus, "TaskModbus", 5 * 1024, NULL, 1, &TaskModBus);
+  #endif
+
+  #if ENV_TASK_DRAIN
+  xTaskCreate(Drain::taskDrain, "TaskDrain", 3 * 1024, NULL, 1, &TaskModBus);
   #endif
 }
 
