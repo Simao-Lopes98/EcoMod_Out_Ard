@@ -27,6 +27,7 @@ namespace Drain
         pinMode(DRAIN_PUMP_GPIO, OUTPUT);
         attachInterrupt(SENSOR_BOT_GPIO, bot_isr, FALLING);
         bool start_pumping = false;
+        uint16_t cycles = 0;
         service_log(TAG, "Booted");
         while (true)
         {
@@ -34,8 +35,11 @@ namespace Drain
             if (digitalRead(SENSOR_TOP_GPIO) && digitalRead(SENSOR_BOT_GPIO) && !start_pumping)
             {
                 start_pumping = true;
+                cycles++;
+                printf("%d\n", (int)cycles);
+                xQueueOverwrite(queues::ncycles,&cycles);
             }
-            if (!digitalRead(SENSOR_BOT_GPIO) && !digitalRead(SENSOR_BOT_GPIO) && start_pumping)
+            if (!digitalRead(SENSOR_BOT_GPIO) && !digitalRead(SENSOR_TOP_GPIO) && start_pumping)
             {
                 start_pumping = false;
             }
