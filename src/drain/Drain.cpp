@@ -1,13 +1,12 @@
 #include "Drain.hpp"
 
-
 namespace Drain
 {
     bool travao = false;
     bool flagCiclo = true;
     uint16_t ciclos = 0;
-    const char* TAG = "Drain";
-    
+    const char *TAG = "Drain";
+
     void bot_isr()
     {
         if (flagCiclo == 1)
@@ -27,32 +26,39 @@ namespace Drain
         pinMode(SENSOR_TOP_GPIO, INPUT);
         pinMode(DRAIN_PUMP_GPIO, OUTPUT);
         attachInterrupt(SENSOR_BOT_GPIO, bot_isr, FALLING);
-
-        service_log(TAG,"Booted");
+        bool start_pumping = false;
+        uint16_t cycles = 0;
+        service_log(TAG, "Booted");
         while (true)
         {
-            if (digitalRead(SENSOR_TOP_GPIO) == HIGH)
-            {                                  // Liquido no sensor de cima detetado com a interrupt
-                travao = 1;                    // Permite incrementar o n de ciclos
-                digitalWrite(DRAIN_PUMP_GPIO, HIGH); // Liga a bomba
-                service_log(TAG,"Pump ON");
+
+            if (digitalRead(SENSOR_TOP_GPIO) && digitalRead(SENSOR_BOT_GPIO) && !start_pumping)
+            {
+                start_pumping = true;
+                cycles++;
+                printf("%d\n", (int)cycles);
+                xQueueOverwrite(queues::ncycles,&cycles);
             }
-            if (digitalRead(SENSOR_BOT_GPIO) == LOW)
+            if (!digitalRead(SENSOR_BOT_GPIO) && !digitalRead(SENSOR_TOP_GPIO) && start_pumping)
+            {
+                start_pumping = false;
+            }
+            if (start_pumping)
+            {
+                digitalWrite(DRAIN_PUMP_GPIO, HIGH);
+                #if ENV_DRAIN_DEBUG
+                    service_log(TAG, "Pump ON");
+                #endif
+            }
+            else
             {
                 digitalWrite(DRAIN_PUMP_GPIO, LOW);
-                service_log(TAG,"Pump OFF");
-                if (flagCiclo == 0)
-                {
-                    // if (!client.connected())
-                    // {
-                    //     reconnect();
-                    // }
-                    // snprintf(msg2, MSG_BUFFER_SIZE2, "{\"ref\": \"Ciclos\", \"Ncic\":\"%d\" }", ciclos);
-                    // client.publish("QTopic", msg2);
-                    // Serial.println(msg2);
-                    flagCiclo = 1; // RESET
-                }
+                #if ENV_DRAIN_DEBUG
+                    service_log(TAG, "Pump OFF");
+                #endif
             }
+
+            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
     }
 }

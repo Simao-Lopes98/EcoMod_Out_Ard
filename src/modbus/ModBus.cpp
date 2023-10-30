@@ -141,44 +141,6 @@ namespace ModBus
         return cod;
     }
 
-    void read_EM(float *parametrosEstacaoMetero)
-    {
-        uint16_t regEM[1];
-
-        for (int i = 0; i < 11; i++)
-        { // Varrer todos os registos da estação
-            if (!mb.slave())
-            {                                            // Check if no transaction in progress
-                mb.readHreg(ENV_EM_ID, i, regEM, 1, cb); // ID, nº do Registo, var onde guardr, evento caso falhe
-                while (mb.slave())
-                { // Check if transaction is active
-                    mb.task();
-                    vTaskDelay(10 / portTICK_PERIOD_MS);
-                }
-            }
-            parametrosEstacaoMetero[i] = regEM[0] / 10;
-            if (i == 9) // Pluviosidade tem de ser dividido por 100
-                parametrosEstacaoMetero[i] = regEM[0] / 100;
-        }
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-
-    int read_pump()
-    {
-        uint16_t reg_pump[1];
-        reg_pump[0] = 0;
-        // Recebe as informações da bomba
-        if (!mb.slave())
-        {                                                            // Para receber informação sobre a bomba
-            mb.readHreg(ENV_PUMP_ID, REG_PUMP_RPM, reg_pump, 1, cb); // ID da bomba, nº do Registo, var onde guardr, evento caso falhe
-            while (mb.slave())
-            { // Check if transaction is active
-                mb.task();
-                vTaskDelay(10 / portTICK_PERIOD_MS);
-            }
-        }
-        return (int)reg_pump[0];
-    }
 
     void taskModbus(void *pvParameters)
     {
@@ -195,8 +157,6 @@ namespace ModBus
             readings.temperature = read_temperature();
             readings.turbidity = read_turb();
             readings.COD = read_cod();
-            read_EM(readings.EM_readings);
-            readings.pump_RMP = read_pump();
 
             #if ENV_MODBUS_DEBUG
                 Serial.println("Temperature: " + String(readings.temperature) + " ,Turb: " + String( readings.turbidity) + " ,COD: " + String(readings.COD) + " ,RPM: " + String(readings.pump_RMP));
