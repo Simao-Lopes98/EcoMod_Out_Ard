@@ -1,2 +1,10 @@
-# EcoModZHC Output MCU
-Ecomod Output uController source code
+# EcoModZHC Output Source Code
+Source code for the output MCU for the masters final project.
+
+## Introduction
+Source code for ESP32, written mainly in C++, using a mix of Arduino and IDF frameworks and using the FreeRTOS scheduler.
+
+In this project the ESP32 on the output of the system is responsible for acquiring data from sensors and relaying it to an MQTT broker.
+
+
+
