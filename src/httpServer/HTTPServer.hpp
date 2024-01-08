@@ -1,4 +1,3 @@
-
 #pragma once
 #include <Arduino.h>
 #include "../queues/queues.hpp"
@@ -17,6 +16,8 @@ namespace HTTPServer
     static esp_err_t update_post_handler(httpd_req_t *req);
 
     static esp_err_t update_get_handler(httpd_req_t *req);
+
+    static esp_err_t reboot_post_handler(httpd_req_t *req);
 
     void registerEndpoints();
 
