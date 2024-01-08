@@ -14,5 +14,5 @@ namespace Drain
     extern uint16_t ciclos;
     extern bool flagCiclo;
     void bot_isr();
-    void taskDrain(void *pvParameters);//Processa dados do protocolo Modbus
+    void taskDrain(void *pvParameters);//Processa dados do protocolo Modbuss
 }
