@@ -49,6 +49,14 @@ namespace HTTPServer
         return ESP_OK;
     }
 
+    static esp_err_t reboot_post_handler(httpd_req_t *req)
+    {
+        printf("Rebooting device\n");
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+        esp_restart();
+        return ESP_OK;
+    }
+
     static esp_err_t update_post_handler(httpd_req_t *req)
     {
         queues::STA_cred_t inc_cred;
@@ -79,7 +87,7 @@ namespace HTTPServer
         const httpd_uri_t update_post_fw = {
             .uri = "/update/firmware",
             .method = HTTP_POST,
-            .handler = OTA::ota_update_post_handler, // TODO: Edit
+            .handler = OTA::ota_update_post_handler,
             .user_ctx = NULL};
         ESP_ERROR_CHECK(httpd_register_uri_handler(http_server, &update_post_fw));
 
@@ -96,6 +104,13 @@ namespace HTTPServer
             .handler = update_get_handler,
             .user_ctx = NULL};
         ESP_ERROR_CHECK(httpd_register_uri_handler(http_server, &update_get_param));
+
+        const httpd_uri_t reboot_post_param = {
+            .uri = "/reboot",
+            .method = HTTP_POST,
+            .handler = reboot_post_handler,
+            .user_ctx = NULL};
+        ESP_ERROR_CHECK(httpd_register_uri_handler(http_server, &reboot_post_param));
     }
 
     void taskHTTPServer(void *pvParameters)

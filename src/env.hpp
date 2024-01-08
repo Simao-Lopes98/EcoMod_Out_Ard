@@ -13,6 +13,8 @@
 */
 #define ENV_SSID "TP-Link_24E3"
 #define ENV_PASSWORD "35677529"
+#define ENV_AP_SSID "ESP_EcoModZHC_OUT"
+#define ENV_AP_PASSWORD "123456789"
 
 /*
 *   I2C
