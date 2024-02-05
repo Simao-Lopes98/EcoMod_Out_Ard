@@ -6,13 +6,13 @@
 *   MQTT
 */
 #define ENV_MQTT_BROKER "raspberrypi.local" // endereço a ligar mqtt.eclipseprojects.io
-#define ENV_SEND_PERIOD_SEC 5
+#define ENV_SEND_PERIOD_SEC 65
 
 /*
 *   Network
 */
-#define ENV_SSID "TP-Link_24E3"
-#define ENV_PASSWORD "35677529"
+#define ENV_SSID "EcoModZHC"
+#define ENV_PASSWORD "mercusys#ac12"
 #define ENV_AP_SSID "ESP_EcoModZHC_OUT"
 #define ENV_AP_PASSWORD "123456789"
 
