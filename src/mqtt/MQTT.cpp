@@ -9,6 +9,7 @@ namespace MQTT
     queues::Modbus_readings_t rcv_modbus_readings;
     uint16_t ncyc = 0;
     char packet[512];
+    char cicPacket[512];
 
     void callback(char *topic, byte *payload, unsigned int length)
     {
@@ -34,7 +35,8 @@ namespace MQTT
             if (client.connect(clientId.c_str()))
             {
                 process_data();
-                client.publish("sensors/input", packet);
+                client.publish(ENV_SENS_OUT_TOPIC, packet);
+                client.publish(ENV_CIC_TOPIC, cicPacket);
                 Serial.println("MQTT: Packet sent");
             }
             else
@@ -65,6 +67,8 @@ namespace MQTT
         //Submerged sensors
         snprintf(packet,512, "{\"ref\":\"sensOUT\", \"pH\":\"%s\", \"temperatura\":\"%.2f\", \"EC\":\"%.3s\", \"Turb\":\"%.2f\", \"COD\":\"%.2f\", \"Cic\":\"%d\" }"
         ,rcv_i2c_readings.ph, rcv_modbus_readings.temperature, rcv_i2c_readings.ec,rcv_modbus_readings.turbidity,rcv_modbus_readings.COD, (int)ncyc);
+
+        snprintf(cicPacket,512,"{\"ref\":\"nCicOUT\", \"nCic\":\"%d\"",(int)ncyc);
     
     }
     void initialize_values()
@@ -92,7 +96,9 @@ namespace MQTT
             client.loop();
 
             process_data();
-            client.publish("sensors/output", packet);
+            client.publish(ENV_SENS_OUT_TOPIC, packet);
+            vTaskDelay(250 / portTICK_PERIOD_MS);
+            client.publish(ENV_CIC_TOPIC, cicPacket);
             #if ENV_MQTT_DEBUG
                 Serial.printf("MQTT: Packet sent: %s",packet);
             #endif
