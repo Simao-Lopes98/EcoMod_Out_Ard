@@ -9,7 +9,8 @@ namespace MQTT
     queues::Modbus_readings_t rcv_modbus_readings;
     uint16_t ncyc = 0;
     char packet[512];
-    char cicPacket[512];
+    char pumpPacket[256];
+    char EmPacket[512];
 
     void callback(char *topic, byte *payload, unsigned int length)
     {
@@ -36,8 +37,13 @@ namespace MQTT
             {
                 process_data();
                 client.publish(ENV_SENS_OUT_TOPIC, packet);
-                client.publish(ENV_CIC_TOPIC, cicPacket);
-                Serial.println("MQTT: Packet sent");
+                Serial.println("MQTT: Sensors Topic sent");
+
+                client.publish(ENV_PUMP_TOPIC, packet);
+                Serial.println("MQTT: Pump Topic sent");
+
+                client.publish(ENV_EM_TOPIC, packet);
+                Serial.println("MQTT: EM Topic sent");
             }
             else
             {
@@ -65,19 +71,36 @@ namespace MQTT
         }
 
         //Submerged sensors
-        snprintf(packet,512, "{\"ref\":\"sensOUT\", \"pH\":\"%s\", \"temperatura\":\"%.2f\", \"EC\":\"%.3s\", \"Turb\":\"%.2f\", \"COD\":\"%.2f\", \"Cic\":\"%d\" }"
+        snprintf(packet,sizeof(packet), "{\"ref\":\"sensOUT\", \"pH\":\"%s\", \"temperatura\":\"%.2f\", \"EC\":\"%.3s\", \"Turb\":\"%.2f\", \"COD\":\"%.2f\", \"Cic\":\"%d\" }"
         ,rcv_i2c_readings.ph, rcv_modbus_readings.temperature, rcv_i2c_readings.ec,rcv_modbus_readings.turbidity,rcv_modbus_readings.COD, (int)ncyc);
 
-        snprintf(cicPacket,512,"{\"ref\":\"nCicOUT\", \"nCic\":\"%d\"",(int)ncyc);
+        snprintf(pumpPacket,sizeof(pumpPacket),"{\"ref\":\"pumpIN\", \"RPM\":\"%d\" }", rcv_modbus_readings.pump_RMP);
+        
+        snprintf(EmPacket,sizeof(EmPacket), "{\"ref\":\"EM\", \"AWD\":\"%.2f\", \"AWS\":\"%.2f\", \"AT\":\"%.2f\", \"AH\":\"%.2f\", \"AP\":\"%.2f\", \"RF\":\"%.2f\", \"UV\":\"%.2f\", \"Rad\":\"%.2f\" }"
+        ,rcv_modbus_readings.EM_readings[1],rcv_modbus_readings.EM_readings[4],rcv_modbus_readings.EM_readings[6],rcv_modbus_readings.EM_readings[7],rcv_modbus_readings.EM_readings[8],rcv_modbus_readings.EM_readings[9],rcv_modbus_readings.EM_readings[11],rcv_modbus_readings.EM_readings[10]);
     
     }
+    
     void initialize_values()
     {
         strcpy(rcv_i2c_readings.ec,"0");
         strcpy(rcv_i2c_readings.ph,"0.0");
-        rcv_modbus_readings.COD=0.0;
-        rcv_modbus_readings.turbidity=0.0;
-        rcv_modbus_readings.temperature=0.0;
+        rcv_modbus_readings.COD = 0.0;
+        rcv_modbus_readings.turbidity = 0.0;
+        rcv_modbus_readings.temperature = 0.0;
+        rcv_modbus_readings.pump_RMP = 0;
+        rcv_modbus_readings.EM_readings[0] = 0.0;
+        rcv_modbus_readings.EM_readings[1] = 0.0;
+        rcv_modbus_readings.EM_readings[2] = 0.0;
+        rcv_modbus_readings.EM_readings[3] = 0.0;
+        rcv_modbus_readings.EM_readings[4] = 0.0;
+        rcv_modbus_readings.EM_readings[5] = 0.0;
+        rcv_modbus_readings.EM_readings[6] = 0.0;
+        rcv_modbus_readings.EM_readings[7] = 0.0;
+        rcv_modbus_readings.EM_readings[8] = 0.0;
+        rcv_modbus_readings.EM_readings[9] = 0.0;
+        rcv_modbus_readings.EM_readings[10] = 0.0;
+        rcv_modbus_readings.EM_readings[11] = 0.0;
     }
 
     void taskMQTT(void *pvParameters) // Task de envio de parametros para o broker
@@ -97,11 +120,22 @@ namespace MQTT
 
             process_data();
             client.publish(ENV_SENS_OUT_TOPIC, packet);
-            vTaskDelay(250 / portTICK_PERIOD_MS);
-            client.publish(ENV_CIC_TOPIC, cicPacket);
-            #if ENV_MQTT_DEBUG
-                Serial.printf("MQTT: Packet sent: %s",packet);
+             #if ENV_MQTT_DEBUG
+                Serial.printf("MQTT: Sensors packet sent: %s",packet);
             #endif
+            vTaskDelay(250 / portTICK_PERIOD_MS);
+
+            client.publish(ENV_PUMP_TOPIC, packet);
+             #if ENV_MQTT_DEBUG
+                Serial.printf("MQTT: Pump packet sent: %s",pumpPacket);
+            #endif
+            vTaskDelay(250 / portTICK_PERIOD_MS);
+
+            client.publish(ENV_EM_TOPIC, packet);
+             #if ENV_MQTT_DEBUG
+                Serial.printf("MQTT: EM packet sent: %s",EmPacket);
+            #endif
+
             vTaskDelay(ENV_SEND_PERIOD_SEC * 1000 / portTICK_PERIOD_MS);
         }
     }

@@ -64,6 +64,37 @@ namespace ModBus
         return valorFloat;
     }
 
+
+    int read_pump()
+    {
+        uint16_t reg_pump[1];
+        reg_pump[0] = 0;
+        // Recebe as informações da bomba
+        if (!mb.slave())
+        {                                                            // Para receber informação sobre a bomba
+            mb.readHreg(ENV_PUMP_ID, REG_PUMP_RPM, reg_pump, 1, cb); // ID da bomba, nº do Registo, var onde guardr, evento caso falhe
+            while (mb.slave())
+            { // Check if transaction is active
+                mb.task();
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+            }
+        }
+        return (int)reg_pump[0];
+    }
+
+    void write_rpm_pump(uint16_t RPM)
+    {
+        if (!mb.slave())
+        {                                                // Para enviar informações
+            mb.writeHreg(ENV_PUMP_ID, REG_PUMP_RPM, RPM, cb); // ID da bomba, registo (velocidade), velocidade e evento
+            while (mb.slave())
+            { // Check if transaction is active
+                mb.task();
+                delay(10);
+            }
+        }
+    }
+
     float read_temperature()
     {
         float temp = 1.23;
@@ -141,14 +172,37 @@ namespace ModBus
         return cod;
     }
 
+    void read_EM(float *parametrosEstacaoMetero)
+    {
+        uint16_t regEM[1];
+
+        for (int i = 0; i < 11; i++)
+        { // Varrer todos os registos da estação
+            if (!mb.slave())
+            {                                            // Check if no transaction in progress
+                mb.readHreg(ENV_EM_ID, i, regEM, 1, cb); // ID, nº do Registo, var onde guardr, evento caso falhe
+                while (mb.slave())
+                { // Check if transaction is active
+                    mb.task();
+                    vTaskDelay(10 / portTICK_PERIOD_MS);
+                }
+            }
+            parametrosEstacaoMetero[i] = regEM[0] / 10;
+            if (i == 9) // Pluviosidade tem de ser dividido por 100
+                parametrosEstacaoMetero[i] = regEM[0] / 100;
+        }
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
 
     void taskModbus(void *pvParameters)
     {
         queues::Modbus_readings_t readings;
-        
+
         Serial1.begin(9600, SERIAL_8N2, 16, 17); // BaudRate, 1 Start Bit 8 Data e 2 StopBit, Rx,Tx
         mb.begin(&Serial1);
         mb.master();
+        uint16_t RPM = 0;
 
         Serial.println("MobBus: Booted");
         while (true)
@@ -157,14 +211,15 @@ namespace ModBus
             readings.temperature = read_temperature();
             readings.turbidity = read_turb();
             readings.COD = read_cod();
+            read_EM(readings.EM_readings);
+            readings.pump_RMP = read_pump();
 
             #if ENV_MODBUS_DEBUG
-                Serial.println("Temperature: " + String(readings.temperature) + " ,Turb: " + String( readings.turbidity) + " ,COD: " + String(readings.COD) + " ,RPM: " + String(readings.pump_RMP));
-                Serial.printf("AWD:%.2f, AWS:%.2f, AT:%.2f, AH:%.2f, AP:%.2f, RF:%.2f, Rad:%.2f, UV:%.2f\n"
-                ,readings.EM_readings[1],readings.EM_readings[4],readings.EM_readings[6],readings.EM_readings[7],readings.EM_readings[8],readings.EM_readings[9],readings.EM_readings[10],readings.EM_readings[11]);
+                Serial.println("Temperature: " + String(readings.temperature) + " ,Turb: " + String(readings.turbidity) + " ,COD: " + String(readings.COD) + " ,RPM: " + String(readings.pump_RMP));
+                Serial.printf("AWD:%.2f, AWS:%.2f, AT:%.2f, AH:%.2f, AP:%.2f, RF:%.2f, Rad:%.2f, UV:%.2f\n", readings.EM_readings[1], readings.EM_readings[4], readings.EM_readings[6], readings.EM_readings[7], readings.EM_readings[8], readings.EM_readings[9], readings.EM_readings[10], readings.EM_readings[11]);
             #endif
 
-            xQueueOverwrite(queues::modbus_readings,&readings);
+            xQueueOverwrite(queues::modbus_readings, &readings);
             vTaskDelay(5000 / portTICK_PERIOD_MS);
         }
     }

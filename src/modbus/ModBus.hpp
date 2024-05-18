@@ -21,5 +21,9 @@ namespace ModBus
     float read_turb();
     float read_cod();
 
+    int read_pump();
+    void write_rpm_pump(uint16_t RPM);
+    void read_EM(float *parametrosEstacaoMetero);
+
     void taskModbus(void *pvParameters);//Processa dados do protocolo Modbus
 }
