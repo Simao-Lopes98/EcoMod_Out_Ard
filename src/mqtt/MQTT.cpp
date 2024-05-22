@@ -39,10 +39,10 @@ namespace MQTT
                 client.publish(ENV_SENS_OUT_TOPIC, packet);
                 Serial.println("MQTT: Sensors Topic sent");
 
-                client.publish(ENV_PUMP_TOPIC, packet);
+                client.publish(ENV_PUMP_TOPIC, pumpPacket);
                 Serial.println("MQTT: Pump Topic sent");
 
-                client.publish(ENV_EM_TOPIC, packet);
+                client.publish(ENV_EM_TOPIC, EmPacket);
                 Serial.println("MQTT: EM Topic sent");
             }
             else
@@ -125,13 +125,13 @@ namespace MQTT
             #endif
             vTaskDelay(250 / portTICK_PERIOD_MS);
 
-            client.publish(ENV_PUMP_TOPIC, packet);
+            client.publish(ENV_PUMP_TOPIC, pumpPacket);
              #if ENV_MQTT_DEBUG
                 Serial.printf("MQTT: Pump packet sent: %s",pumpPacket);
             #endif
             vTaskDelay(250 / portTICK_PERIOD_MS);
 
-            client.publish(ENV_EM_TOPIC, packet);
+            client.publish(ENV_EM_TOPIC, EmPacket);
              #if ENV_MQTT_DEBUG
                 Serial.printf("MQTT: EM packet sent: %s",EmPacket);
             #endif
