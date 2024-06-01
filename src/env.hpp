@@ -6,7 +6,7 @@
 *   MQTT
 */
 #define ENV_MQTT_BROKER "raspberrypi.local" // endereço a ligar mqtt.eclipseprojects.io
-#define ENV_SEND_PERIOD_SEC 65
+#define ENV_SEND_PERIOD_SEC 600
 #define ENV_SENS_OUT_TOPIC "sensors/output"
 #define ENV_PUMP_TOPIC "pump/input"
 #define ENV_EM_TOPIC "sensors/EM"

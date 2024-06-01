@@ -11,6 +11,7 @@ namespace MQTT
     char packet[512];
     char pumpPacket[256];
     char EmPacket[512];
+    uint16_t msg_time_period = ENV_SEND_PERIOD_SEC;
 
     void callback(char *topic, byte *payload, unsigned int length)
     {
@@ -37,13 +38,19 @@ namespace MQTT
             {
                 process_data();
                 client.publish(ENV_SENS_OUT_TOPIC, packet);
-                Serial.println("MQTT: Sensors Topic sent");
+                #if ENV_MQTT_DEBUG
+                    Serial.println("MQTT: Sensors Topic sent");
+                #endif
 
                 client.publish(ENV_PUMP_TOPIC, pumpPacket);
-                Serial.println("MQTT: Pump Topic sent");
+                #if ENV_MQTT_DEBUG
+                    Serial.println("MQTT: Pump Topic sent");
+                #endif
 
                 client.publish(ENV_EM_TOPIC, EmPacket);
-                Serial.println("MQTT: EM Topic sent");
+                #if ENV_MQTT_DEBUG
+                    Serial.println("MQTT: EM Topic sent");
+                #endif
             }
             else
             {
@@ -120,23 +127,31 @@ namespace MQTT
 
             process_data();
             client.publish(ENV_SENS_OUT_TOPIC, packet);
-             #if ENV_MQTT_DEBUG
+            #if ENV_MQTT_DEBUG
                 Serial.printf("MQTT: Sensors packet sent: %s",packet);
             #endif
             vTaskDelay(250 / portTICK_PERIOD_MS);
 
             client.publish(ENV_PUMP_TOPIC, pumpPacket);
-             #if ENV_MQTT_DEBUG
+            #if ENV_MQTT_DEBUG
                 Serial.printf("MQTT: Pump packet sent: %s",pumpPacket);
             #endif
             vTaskDelay(250 / portTICK_PERIOD_MS);
 
             client.publish(ENV_EM_TOPIC, EmPacket);
-             #if ENV_MQTT_DEBUG
+            #if ENV_MQTT_DEBUG
                 Serial.printf("MQTT: EM packet sent: %s",EmPacket);
             #endif
 
-            vTaskDelay(ENV_SEND_PERIOD_SEC * 1000 / portTICK_PERIOD_MS);
+            if(uxQueueMessagesWaiting(queues::msg_period))
+            {
+                xQueueReceive(queues::msg_period,&msg_time_period,10 / portTICK_PERIOD_MS);
+                #if ENV_MQTT_DEBUG
+                    Serial.printf("MQTT: Message sending waiting time updated to: %"PRIu16"\n",msg_time_period);
+                #endif
+            }
+
+            vTaskDelay(msg_time_period * 1000 / portTICK_PERIOD_MS);
         }
     }
 }

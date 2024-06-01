@@ -8,6 +8,7 @@ namespace queues
     QueueHandle_t i2c_readings; // Mailbox
     QueueHandle_t modbus_readings;//Mailbox
     QueueHandle_t ncycles; // Mailbox
+    QueueHandle_t msg_period;
 
     void setup()
     {
@@ -17,5 +18,6 @@ namespace queues
         i2c_readings = xQueueCreate(1, sizeof(I2C_readings_t));
         modbus_readings = xQueueCreate(1, sizeof(Modbus_readings_t));
         ncycles = xQueueCreate(1,sizeof(uint16_t));
+        msg_period = xQueueCreate(2, sizeof(uint16_t));
     }
 }

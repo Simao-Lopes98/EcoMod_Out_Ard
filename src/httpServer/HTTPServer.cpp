@@ -75,6 +75,23 @@ namespace HTTPServer
         return ESP_OK;
     }
 
+    static esp_err_t msg_period_post_handler(httpd_req_t *req)
+    {
+        char *req_body = (char *)malloc((req->content_len + 1) * sizeof(char));
+        if (esp_err_t res = read_req_body(req, req_body) != ESP_OK)
+        {
+            return res;
+        }
+        uint16_t envSec = 0;
+        cJSON *obj = cJSON_Parse(req_body);
+        envSec = (uint16_t)atoi(cJSON_GetObjectItem(obj, "periodSec")->valuestring);
+        xQueueSend(queues::msg_period, &envSec, 15 / portTICK_PERIOD_MS);
+
+        cJSON_Delete(obj);
+        free(req_body);
+        return ESP_OK;
+    }
+
     void registerEndpoints()
     {
         const httpd_uri_t index_get = {
@@ -111,6 +128,13 @@ namespace HTTPServer
             .handler = reboot_post_handler,
             .user_ctx = NULL};
         ESP_ERROR_CHECK(httpd_register_uri_handler(http_server, &reboot_post_param));
+
+        const httpd_uri_t rpm_post_param = {
+            .uri = "/changeSec",
+            .method = HTTP_POST,
+            .handler = msg_period_post_handler,
+            .user_ctx = NULL};
+        ESP_ERROR_CHECK(httpd_register_uri_handler(http_server, &rpm_post_param));
     }
 
     void taskHTTPServer(void *pvParameters)

@@ -35,4 +35,5 @@ namespace queues
     extern QueueHandle_t i2c_readings; // Mailbox
     extern QueueHandle_t modbus_readings; // Mailbox
     extern QueueHandle_t ncycles; // Mailbox
+    extern QueueHandle_t msg_period;
 }
