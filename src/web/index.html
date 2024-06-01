@@ -52,18 +52,54 @@
 			background-color: #03176c;
 		}
 
-		/* Progress bar */
 		#progress {
 			text-align: center;
 			margin-top: 10px;
 		}
 
-		/* Responsive layout for small screens */
 		@media screen and (max-width: 600px) {
 			.container {
 				width: 100%;
 				padding: 10px;
 			}
+		}
+
+		/* Slider CSS */
+		.slider {
+			width: 100%;
+			-webkit-appearance: none;
+			appearance: none;
+			height: 10px;
+			border-radius: 5px;
+			background: #a1a1a1;
+			outline: none;
+
+			::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: black;
+				cursor: pointer;
+			}
+
+			::-moz-range-thumb {
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: black;
+				cursor: pointer;
+			}
+		}
+
+		.slider-container {
+			margin-top: 20px;
+		}
+
+		.slider-label {
+			font-size: 18px;
+			margin-top: 10px;
 		}
 	</style>
 	<script>
@@ -95,11 +131,12 @@
 				xhr.setRequestHeader("Content-Type", "application/json");
 				xhr.send(JSON.stringify(credentials));
 
-				// Optionally, you can clear the SSID and password fields after submission.
 				document.getElementById("ssid").value = "";
 				document.getElementById("password").value = "";
 			}
 		}
+
+		//Upload binary file request
 		function startUpload() {
 			var otafile = document.getElementById("otafile").files;
 
@@ -172,6 +209,25 @@
 			xhr.send();
 		}
 
+		function requestEnvSec() {
+			var sec = document.getElementById("secSlider").value;
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function () {
+				if (xhr.readyState == 4) {
+					if (xhr.status == 200) {
+						var response = xhr.responseText;
+						alert("Message pause period changed successfully to: " + sec);
+					} else {
+						alert("Error changing message period: " + xhr.status + " " + xhr.statusText);
+					}
+				}
+			};
+			xhr.open("POST", "/changeSec", true);
+			xhr.setRequestHeader("Content-Type", "application/json");
+			var data = JSON.stringify({ periodSec: sec });
+			xhr.send(data);
+		}
+
 	</script>
 </head>
 
@@ -188,14 +244,36 @@
 
 		<label for="otafile">Firmware update file:</label>
 		<input type="file" id="otafile" name="otafile" />
+		<div id="progress"></div>
 
 		<button id="upload" type="button" onclick="startUpload()">Upload Firmware</button>
 
 		<button id="requestData" type="button" onclick="requestData()">Request Sensor Data</button>
 
-		<button id="restart_uC" type="button" onclick="requestSoftRestart()">Request restart</button>
+		<button id="restart_uC" type="button" onclick="requestSoftRestart()">Request Restart</button>
 
-		<div id="progress"></div>
+		<div class="slider-container">
+			<input type="range" min="0" max="900" step="1" value="600" class="slider" id="secSlider">
+			<p class="slider-label" id="sliderValue">Value: 600</p>
+		</div>
+
+		<script>
+			// Get the slider and label elements
+			const slider = document.getElementById("secSlider");
+			const output = document.getElementById("sliderValue");
+
+			// Display the default value on page load
+			output.innerHTML = "Seconds: " + slider.value;
+
+			// Update the label text when the slider value changes
+			slider.oninput = function () {
+				output.innerHTML = "Seconds: " + this.value;
+			};
+		</script>
+
+		<button id="changeSecBtn" type="button" onclick="requestEnvSec()">Change Message Period</button>
+
+		
 	</div>
 </body>
 
